@@ -34,6 +34,8 @@ class AERun():
             n_ctxs=1e3,
         ) 
 
+        self.model = model
+        self.submodule = submodule
         self.lr = lr
         self.sparsity_penalty = sparsity_penalty
         self.scale_factor = scale_factor
@@ -46,7 +48,7 @@ class AERun():
     def train(self, steps):
         self.full_name = f"ae-{self.model_name.split('/')[-1]}-{self.dataset_name.split('/')[-1]}-{self.lr}-{self.sparsity_penalty}-{self.ghost_threshold}-{steps}.pt"
 
-        wandb.init(
+        run = wandb.init(
             project="my-awesome-project",
             name=self.full_name,
     
@@ -77,6 +79,14 @@ class AERun():
 
         t.save(self.ae.state_dict(), self.full_name)
         wandb.save(self.full_name)
+
+        evaluation = evaluate(self.model, self.submodule, self.ae, self.buffer, 
+                              device='cuda:0')
+                            
+        for k in evaluation:
+            wandb.summary[k] = evaluation[k]
+        
+        wandb.summary.update()
 
         wandb.finish()
         return self.ae
