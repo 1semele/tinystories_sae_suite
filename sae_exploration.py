@@ -12,34 +12,11 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 from datasets import load_dataset
 
-# %%
-
-model = LanguageModel(
-    "delphi-suite/delphi-llama2-100k",
-    device_map = 'cuda:0'
-)
-submodule = model.model.layers[0]
-
-expansion_size = 4
-
-activation_dim = 48 # output dimension of the MLP
-dictionary_size = expansion_size * activation_dim
+import wandb
 
 # %%
-# data much be an iterator that outputs strings
 
-def hf_dataset_to_generator(dataset_name, split='train', streaming=True):
-    dataset = load_dataset(dataset_name, split=split, streaming=streaming)
-    
-    def gen():
-        for x in iter(dataset):
-            yield x['story']
-    
-    return gen()
 
-data_generator = hf_dataset_to_generator("delphi-suite/tinystories-v2-clean", "train")
-
-device = t.device("cuda" if t.cuda.is_available() else "cpu")
 # %%
 buffer = ActivationBuffer(
     data_generator,
